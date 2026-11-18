@@ -116,6 +116,34 @@ def to_eastern(utc):
     return utc.replace(tzinfo=None) + _dt.timedelta(hours=eastern_offset(utc))
 
 
+def eastern_to_utc(local):
+    """Naive New York wall-clock time -> aware UTC datetime."""
+    for h in (4, 5):
+        utc = local + _dt.timedelta(hours=h)
+        if eastern_offset(utc) == -h:
+            return utc.replace(tzinfo=_dt.timezone.utc)
+    return (local + _dt.timedelta(hours=5)).replace(tzinfo=_dt.timezone.utc)
+
+
+def parse_now(value):
+    """ISO/RFC time for --now -> aware UTC datetime. Naive times are taken as New York time."""
+    value = (value or "").strip()
+    if not value:
+        return _dt.datetime.now(_dt.timezone.utc)
+    try:
+        d = email.utils.parsedate_to_datetime(value)
+    except (TypeError, ValueError, IndexError):
+        d = None
+    if d is None:
+        try:
+            d = _dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if d.tzinfo is None:
+        return eastern_to_utc(d)
+    return d.astimezone(_dt.timezone.utc)
+
+
 # ---------------------------------------------------------------- inputs
 
 def load_json(path):
@@ -509,7 +537,7 @@ def main(argv=None):
         print("news: no tickers. Pass --tickers, or run /trader-scanner first (it writes "
               "trader/watchlist.json).", file=sys.stderr)
         return 2
-    now = parse_time(args.now) if args.now else _dt.datetime.now(_dt.timezone.utc)
+    now = parse_now(args.now) if args.now else _dt.datetime.now(_dt.timezone.utc)
     state = load_json(args.state) or {}
     errors = []
     ua = sec_user_agent(args.user_agent, args.config)

@@ -862,9 +862,11 @@ def _write(path, doc):
     d = os.path.dirname(path)
     if d:
         os.makedirs(d, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
+    tmp = "%s.tmp.%d" % (path, os.getpid())
+    with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=1)
         fh.write("\n")
+    os.replace(tmp, path)
 
 
 def compute(a):

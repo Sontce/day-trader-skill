@@ -66,6 +66,11 @@ class ExplicitYes(unittest.TestCase):
         for r in ("yes 9", "yes 10 TSLA", "yes but stop at 357", "yes, stop 358.32", "yes AAPL", "sure"):
             self.assertFalse(self.yes(r, o, ["TSLA", "AAPL"]), r)
 
+    def test_short_tickers_do_not_block_english_words(self):
+        o = tsla()
+        self.assertTrue(self.yes("Yes, buy it", o, ["TSLA", "IT", "GO"]))
+        self.assertFalse(self.yes("yes GO", o, ["TSLA", "IT", "GO"]))
+
 
 class TicketShape(unittest.TestCase):
     def test_tool_input_is_the_alpaca_call(self):

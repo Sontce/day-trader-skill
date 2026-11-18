@@ -683,7 +683,8 @@ def cmd_show(a):
     if a.json:
         print(json.dumps(plan, indent=2))
         return 0
-    for line in describe(dict({"setup": "orb", "interval": "5m", "stop_label": "", "target_label": ""}, **plan)):
+    clean = {k: v for k, v in plan.items() if v is not None}
+    for line in describe(dict({"setup": "orb", "interval": "5m", "stop_label": "", "target_label": ""}, **clean)):
         print(line)
     today = to_eastern(parse_now(a.now)).date().isoformat()
     if plan["date"] != today:

@@ -283,9 +283,10 @@ def parse_yes(reply, order, batch_symbols=()):
     if DOUBT_WORDS & set(words[1:]):
         return False, "the reply has a condition or a doubt in it; ask again"
     sym = str(order.get("symbol", "")).upper()
-    tokens = set(re.findall(r"[A-Z][A-Z.\-]{0,6}", raw.upper()))
+    exact_tokens = set(re.findall(r"\b[A-Z][A-Z.\-]{0,6}\b", raw))
+    upper_tokens = set(re.findall(r"[A-Z][A-Z.\-]{0,6}", raw.upper()))
     others = {s.upper() for s in batch_symbols} - {sym}
-    named = tokens & others
+    named = (exact_tokens & others) | ({s for s in others if len(s) >= 3} & upper_tokens)
     if named:
         return False, "the reply names %s, but this order is for %s" % (", ".join(sorted(named)), sym)
     nums = [float(n.replace(",", "")) for n in re.findall(r"\d[\d,]*(?:\.\d+)?", raw)]

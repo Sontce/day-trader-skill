@@ -203,6 +203,12 @@ class Check(unittest.TestCase):
         self.assertNotIn("old", state["seen"])
         self.assertEqual(state["last_check"], now.isoformat())
 
+    def test_parse_now_naive_is_eastern(self):
+        edt = news.parse_now("2026-10-19 10:15")
+        self.assertEqual((edt.hour, edt.minute), (14, 15))
+        est = news.parse_now("2026-11-18 10:15")
+        self.assertEqual((est.hour, est.minute), (15, 15))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -675,11 +675,17 @@ def orb_window(now_utc, at, or_minutes, until, explicit_day=None):
                         "closes at %s. Run orb again after %s."
                         % (clock_label(cutoff), or_minutes, clock_label(range_end), clock_label(first_close),
                            clock_label(first_close)))
-    if until is not None and cutoff.time() > until:
-        raise ScanError("It is %s ET, after %s, your last time for new entries (no_entries_after): an "
-                        "opening-range breakout found now is expired. Run orb tomorrow after %s, or replay "
-                        "today with --at 10:15." % (clock_label(cutoff), until.strftime("%H:%M"),
-                                                      clock_label(first_close)))
+    if until is not None:
+        if s[1] < CLOSE:
+            until_dt = datetime.datetime.combine(day, until)
+            if until_dt >= close_dt:
+                moved = until_dt - (datetime.datetime.combine(day, CLOSE) - close_dt)
+                until = moved.time() if moved.time() > OPEN else s[1]
+        if cutoff.time() > until:
+            raise ScanError("It is %s ET, after %s, your last time for new entries (no_entries_after): an "
+                            "opening-range breakout found now is expired. Run orb tomorrow after %s, or replay "
+                            "today with --at 10:15." % (clock_label(cutoff), until.strftime("%H:%M"),
+                                                          clock_label(first_close)))
     return day, cutoff
 
 
@@ -900,7 +906,7 @@ def cmd_daily(a):
            "source": "yahoo", "filters": {"min_price": a.min_price, "min_volume": a.min_volume},
            "note": NOTE, "hits": hits}
     if a.offline:
-        doc["offline"] = os.path.basename(a.offline.rstrip("/"))
+        doc["offline"] = os.path.basename(a.offline.rstrip("/\\"))
     if not a.no_write:
         write_json(a.out, doc)
     if a.json:
@@ -989,7 +995,7 @@ def cmd_orb(a):
            "interval": "%dm" % BAR_MIN,
            "filters": {"min_price": a.min_price, "min_volume": a.min_volume}, "note": NOTE, "hits": hits}
     if a.offline:
-        doc["offline"] = os.path.basename(a.offline.rstrip("/"))
+        doc["offline"] = os.path.basename(a.offline.rstrip("/\\"))
     if not a.no_write:
         write_json(a.out, doc)
     if a.json:
